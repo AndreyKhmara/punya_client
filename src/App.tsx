@@ -3,7 +3,7 @@ import axios from "axios";
 import { useAppDispatch, useAppSelector } from "./app/hooks";
 import { setAnswer, setPrompt } from "./features/agent/agentSlice";
 
-const FETCH_URL = "http://localhost:11434/api/generate";
+const FETCH_URL = import.meta.env.VITE_API_URL;
 
 function App() {
   const dispatch = useAppDispatch();
@@ -20,14 +20,12 @@ function App() {
       setIsLoading(true);
       dispatch(setAnswer("Генерирую ответ..."));
 
-      const { data } = await axios.post<{ response?: string }>(FETCH_URL, {
-        model: "llama3.2",
+      const { data } = await axios.post(FETCH_URL, {
         prompt,
-        stream: false
       });
 
       dispatch(
-        setAnswer(data.response?.trim() || "Сервер вернул пустой ответ.")
+        setAnswer(data.response?.trim() || "Сервер вернул пустой ответ."),
       );
     } catch (error) {
       const message = axios.isAxiosError(error)
@@ -37,6 +35,7 @@ function App() {
         : error instanceof Error
           ? error.message
           : "Неизвестная ошибка";
+
       dispatch(setAnswer(`Ошибка запроса: ${message}`));
     } finally {
       setIsLoading(false);
