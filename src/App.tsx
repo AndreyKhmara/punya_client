@@ -1,17 +1,46 @@
+import { useState } from "react";
+import axios from "axios";
 import { useAppDispatch, useAppSelector } from "./app/hooks";
 import { setAnswer, setPrompt } from "./features/agent/agentSlice";
+
+const FETCH_URL = "http://localhost:11434/api/generate";
 
 function App() {
   const dispatch = useAppDispatch();
   const { answer, prompt } = useAppSelector((state) => state.agent);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleGenerateMockAnswer = () => {
+  const handleGenerateAnswer = async () => {
     if (!prompt.trim()) {
       dispatch(setAnswer("Введите текст в поле ниже, чтобы получить ответ."));
       return;
     }
 
-    dispatch(setAnswer(`Ответ на запрос: ${prompt}`));
+    try {
+      setIsLoading(true);
+      dispatch(setAnswer("Генерирую ответ..."));
+
+      const { data } = await axios.post<{ response?: string }>(FETCH_URL, {
+        model: "llama3.2",
+        prompt,
+        stream: false
+      });
+
+      dispatch(
+        setAnswer(data.response?.trim() || "Сервер вернул пустой ответ.")
+      );
+    } catch (error) {
+      const message = axios.isAxiosError(error)
+        ? error.response
+          ? `HTTP ${error.response.status}`
+          : error.message
+        : error instanceof Error
+          ? error.message
+          : "Неизвестная ошибка";
+      dispatch(setAnswer(`Ошибка запроса: ${message}`));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -43,10 +72,11 @@ function App() {
 
       <button
         type="button"
-        onClick={handleGenerateMockAnswer}
-        className="w-fit rounded-lg bg-slate-900 px-4 py-2 font-medium text-white transition hover:bg-slate-700"
+        onClick={handleGenerateAnswer}
+        disabled={isLoading}
+        className="w-fit rounded-lg bg-slate-900 px-4 py-2 font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Отправить
+        {isLoading ? "Отправка..." : "Отправить"}
       </button>
     </main>
   );
