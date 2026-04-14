@@ -7,7 +7,7 @@ type AgentState = {
 
 const initialState: AgentState = {
   answer: "Здесь будет ответ агента...",
-  prompt: ""
+  prompt: "",
 };
 
 const agentSlice = createSlice({
@@ -19,8 +19,8 @@ const agentSlice = createSlice({
     },
     setAnswer(state, action: PayloadAction<string>) {
       state.answer = action.payload;
-    }
-  }
+    },
+  },
 });
 
 export const { setPrompt, setAnswer } = agentSlice.actions;
